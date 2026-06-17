@@ -1,0 +1,932 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+<title>Préstamos</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:#f5f5f5;font-family:'Inter',sans-serif;color:#1a1a1a;overflow:hidden}
+#app{display:flex;flex-direction:column;height:100%;max-width:430px;margin:0 auto;background:#fff;position:relative}
+/* HEADER */
+#header{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;background:#fff;border-bottom:1px solid #e8e8e8;flex-shrink:0;z-index:10}
+.h-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.05em;color:#00c853;line-height:1}
+.h-sub{font-size:10px;color:#999;letter-spacing:.1em;text-transform:uppercase}
+.h-btn{width:36px;height:36px;border-radius:50%;background:#f0f0f0;border:none;color:#666;font-size:18px;cursor:pointer}
+/* SCROLL */
+#content{flex:1;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;padding-bottom:70px}
+#content::-webkit-scrollbar{display:none}
+/* NAV */
+#nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:#fff;border-top:1px solid #e8e8e8;z-index:40}
+.nav-btn{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 0 6px;border:none;background:transparent;color:#bbb;font-family:'Inter',sans-serif;font-size:9px;font-weight:500;cursor:pointer;gap:2px}
+.nav-btn.active{color:#00c853}
+.nav-icon{font-size:19px;line-height:1}
+/* FAB */
+#fab{position:fixed;bottom:72px;right:calc(50% - 215px + 16px);width:52px;height:52px;border-radius:50%;background:#00c853;border:none;color:#000;font-size:26px;cursor:pointer;box-shadow:0 4px 16px #00c85350;z-index:30;display:flex;align-items:center;justify-content:center}
+@media(max-width:430px){#fab{right:16px}}
+/* CARDS */
+.loan-card{margin:0 14px 10px;background:#fff;border:1px solid #e8e8e8;border-radius:14px;overflow:hidden;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.card-top{display:flex;align-items:center;padding:12px 14px 8px;gap:12px}
+.avatar{width:40px;height:40px;border-radius:50%;background:#f0f0f0;display:flex;align-items:center;justify-content:center;font-size:17px;font-weight:600;color:#888;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.card-name{font-size:15px;font-weight:600;color:#1a1a1a;line-height:1.2}
+.card-meta{font-size:11px;color:#999;margin-top:2px}
+.badge{padding:3px 9px;border-radius:100px;font-size:10px;font-weight:600;margin-left:auto;flex-shrink:0}
+.card-nums{display:grid;grid-template-columns:1fr 1fr 1fr;padding:0 14px 10px;gap:4px}
+.num-lbl{font-size:9px;color:#aaa;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+.num-val{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:.02em}
+.card-actions{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid #f0f0f0}
+.card-btn{padding:10px 0;border:none;background:transparent;font-family:'Inter',sans-serif;font-size:13px;font-weight:500;cursor:pointer}
+.card-btn.pago{color:#d4a000;border-right:1px solid #f0f0f0}
+.card-btn.det{color:#aaa}
+.prog-wrap{margin:0 14px 10px}
+.prog-track{height:4px;background:#eee;border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:#00c853;border-radius:2px}
+.prog-lbl{font-size:10px;color:#aaa;margin-top:3px}
+.mora-bar{margin:0 14px 8px;background:#fff5f5;border:1px solid #ffcccc;border-radius:8px;padding:8px 12px;display:flex;justify-content:space-between;align-items:center}
+.mora-lbl{font-size:11px;color:#cc3333;font-weight:600}
+.mora-val{font-size:13px;color:#cc3333;font-weight:700}
+/* EMPTY */
+.empty{text-align:center;padding:52px 24px}
+.empty-icon{font-size:44px;margin-bottom:10px}
+.empty-msg{font-size:14px;color:#bbb}
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px}
+.stat-box{background:#f8f8f8;border:1px solid #ebebeb;border-radius:12px;padding:12px 14px}
+.stat-lbl{font-size:10px;color:#888;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
+.stat-val{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.03em;line-height:1}
+.stat-sub{font-size:10px;color:#aaa;margin-top:2px}
+/* SECTION HEADER */
+.sec-hdr{display:flex;justify-content:space-between;align-items:center;padding:14px 14px 8px}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:20px;color:#00c853;letter-spacing:.04em}
+.sec-sub{font-size:11px;color:#aaa}
+/* FILTERS */
+.filter-row{display:flex;gap:6px;padding:0 14px 10px;overflow-x:auto}
+.filter-row::-webkit-scrollbar{display:none}
+.ftab{flex-shrink:0;padding:5px 13px;border-radius:100px;border:1px solid #ddd;background:transparent;color:#888;font-size:12px;font-family:'Inter',sans-serif;cursor:pointer;white-space:nowrap}
+.ftab.active{background:#00c853;border-color:#00c853;color:#000;font-weight:600}
+/* SEARCH */
+.search-wrap{padding:10px 14px 6px;position:relative}
+.search-inp{width:100%;background:#f8f8f8;border:1px solid #eee;color:#1a1a1a;border-radius:12px;padding:11px 14px 11px 36px;font-family:'Inter',sans-serif;font-size:14px;-webkit-appearance:none}
+.search-ico{position:absolute;left:26px;top:50%;transform:translateY(-50%);color:#bbb;pointer-events:none;font-size:14px}
+/* MODAL OVERLAY */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:200;display:none;flex-direction:column;justify-content:flex-end}
+.overlay.open{display:flex}
+.sheet{background:#fff;border-radius:20px 20px 0 0;border-top:1px solid #e8e8e8;max-height:92vh;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.sheet::-webkit-scrollbar{display:none}
+.sh-handle{width:36px;height:4px;background:#ddd;border-radius:2px;margin:12px auto 0}
+.sh-hdr{display:flex;align-items:center;justify-content:space-between;padding:14px 20px 4px}
+.sh-title{font-size:18px;font-weight:600;color:#1a1a1a}
+.sh-close{width:30px;height:30px;border-radius:50%;background:#f0f0f0;border:none;color:#666;font-size:16px;cursor:pointer}
+.sh-body{padding:14px 20px 32px}
+/* FORM */
+.field{margin-bottom:14px}
+.field label{font-size:11px;color:#888;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:5px;display:block}
+.field input,.field select,.field textarea{width:100%;background:#f8f8f8;border:1px solid #e8e8e8;color:#1a1a1a;border-radius:10px;padding:12px 14px;font-family:'Inter',sans-serif;font-size:16px;-webkit-appearance:none}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#00c853}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+/* BUTTONS */
+.btn{width:100%;padding:14px;border-radius:12px;border:none;font-family:'Inter',sans-serif;font-size:15px;font-weight:600;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-green{background:#00c853;color:#000}
+.btn-yellow{background:#ffd600;color:#000}
+.btn-blue{background:#1565c0;color:#fff}
+.btn-out{background:transparent;color:#888;border:1px solid #ddd}
+.btn-row{display:flex;gap:10px;margin-top:6px}
+.btn-row .btn{margin-top:0}
+/* ALERT */
+.alert{padding:11px 14px;border-radius:10px;font-size:13px;margin-bottom:12px;display:none}
+.alert.show{display:block}
+.alert-err{background:#fff0f0;border:1px solid #ffcccc;color:#cc3333}
+/* DETAIL */
+.d-hero{margin:0 20px 14px;background:#f8f8f8;border-radius:14px;padding:14px}
+.d-nums{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-bottom:10px}
+.d-lbl{font-size:9px;color:#aaa;font-weight:600;letter-spacing:.07em;text-transform:uppercase;margin-bottom:3px}
+.d-val{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.02em}
+.d-row{display:flex;justify-content:space-between;align-items:center;padding:10px 20px;border-bottom:1px solid #f0f0f0;font-size:13px}
+.d-row-lbl{color:#aaa;font-size:12px}
+.pago-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #f0f0f0}
+.pago-monto{font-family:'Bebas Neue',sans-serif;font-size:19px;color:#d4a000;letter-spacing:.02em}
+.pago-meta{font-size:11px;color:#aaa;margin-top:1px}
+/* CLIENT CARD */
+.cli-card{margin:0 14px 10px;background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:13px;display:flex;align-items:center;gap:12px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.cli-name{font-size:15px;font-weight:600;color:#1a1a1a}
+.cli-contact{font-size:12px;color:#aaa;margin-top:2px}
+.icon-btn{width:34px;height:34px;border-radius:8px;border:1px solid #e8e8e8;background:transparent;color:#888;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.icon-btn.red{color:#ff5252;border-color:#ffcccc}
+/* FOTO */
+.foto-zona{border:2px dashed #ddd;border-radius:12px;padding:18px;text-align:center;cursor:pointer;margin-bottom:14px}
+.foto-preview{width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-bottom:8px}
+/* REPORTES */
+.chart-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.chart-lbl{font-size:11px;color:#aaa;width:60px;flex-shrink:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;text-align:right}
+.chart-track{flex:1;height:22px;background:#f0f0f0;border-radius:6px;overflow:hidden;position:relative}
+.chart-fill{height:100%;background:#d4f0e0;border-radius:6px;display:flex;align-items:center;padding-left:8px;font-size:10px;font-weight:600;color:#1a1a1a}
+.chart-int{position:absolute;top:0;left:0;height:100%;background:#00c85330;border-radius:6px}
+.chart-gain{font-size:10px;color:#00c853;width:42px;text-align:right;flex-shrink:0}
+.mes-card{margin:0 14px 10px;background:#fff;border:1px solid #e8e8e8;border-radius:12px;padding:14px;box-shadow:0 1px 4px rgba(0,0,0,.04)}
+.mes-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.03em;margin-bottom:8px;text-transform:capitalize}
+.mes-row{display:flex;justify-content:space-between;font-size:12px;padding:4px 0;border-bottom:1px solid #f5f5f5}
+.mes-row:last-child{border-bottom:none}
+/* TASAS */
+.escala-strip{display:flex;gap:8px;overflow-x:auto;padding:0 14px 10px}
+.escala-strip::-webkit-scrollbar{display:none}
+.esc-chip{flex-shrink:0;background:#fff;border:1px solid #e0e0e0;border-radius:8px;padding:7px 12px;text-align:center}
+.esc-rango{font-size:9px;color:#aaa;font-weight:600;text-transform:uppercase}
+.esc-pct{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:.03em;margin-top:1px}
+.int-hdr{display:grid;grid-template-columns:.9fr .6fr 1fr 1fr;background:#1a1a1a;border-radius:10px 10px 0 0;padding:9px 12px;gap:4px;margin:0 14px}
+.int-th{font-size:8px;color:#666;font-weight:600;letter-spacing:.07em;text-transform:uppercase;text-align:right}
+.int-th:first-child{text-align:left;color:#fff}
+.int-row{display:grid;grid-template-columns:.9fr .6fr 1fr 1fr;padding:10px 12px;background:#fff;border-bottom:1px solid #f5f5f5;align-items:center;gap:4px;margin:0 14px}
+.int-row:last-child{border-radius:0 0 10px 10px;border-bottom:none}
+.int-row:nth-child(even){background:#fafafa}
+.int-row.t1{border-left:3px solid #64b5f6}
+.int-row.t2{border-left:3px solid #00c853}
+.int-row.t3{border-left:3px solid #ffd600}
+.int-row.t4{border-left:3px solid #ff9800}
+.int-row.t5{border-left:3px solid #ff5252}
+.int-monto{font-family:'Bebas Neue',sans-serif;font-size:17px;color:#1a1a1a;letter-spacing:.02em}
+.int-badge{display:inline-block;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:600}
+.int-val{font-family:'Bebas Neue',sans-serif;font-size:15px;text-align:right;letter-spacing:.02em}
+.int-sub{font-size:9px;color:#bbb;text-align:right;margin-top:1px}
+.int-sep{background:#f0f0f0;padding:5px 26px;font-size:9px;color:#aaa;font-weight:600;text-transform:uppercase;display:flex;justify-content:space-between;margin:0 14px}
+.res-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:0 14px 14px}
+.res-box{background:#f8f8f8;border:1px solid #eee;border-radius:10px;padding:11px 13px}
+.res-lbl{font-size:9px;color:#aaa;font-weight:600;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.res-val{font-family:'Bebas Neue',sans-serif;font-size:21px;letter-spacing:.03em}
+</style>
+</head>
+<body>
+<div id="app">
+  <div id="header">
+    <div>
+      <div class="h-title">PRÉSTAMOS</div>
+      <div class="h-sub">Control de préstamos</div>
+    </div>
+    <button class="h-btn" onclick="cargarDatos()">↺</button>
+  </div>
+  <div id="content"></div>
+  <button id="fab" onclick="abrirFab()">＋</button>
+  <nav id="nav"></nav>
+</div>
+
+<!-- SHEET CLIENTE -->
+<div class="overlay" id="sheetCliente">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title" id="shCliTitle">Nuevo Cliente</span>
+      <button class="sh-close" onclick="cerrar('sheetCliente')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="alert alert-err" id="errCli"></div>
+      <div id="fotoZona" class="foto-zona" onclick="document.getElementById('fotoInput').click()">
+        <div id="fotoPreviewWrap" style="display:none"><img id="fotoPreview" class="foto-preview"/></div>
+        <div id="fotoPlaceholder"><div style="font-size:32px;margin-bottom:6px">📷</div><div style="font-size:13px;color:#aaa">Toca para agregar foto / ID</div></div>
+      </div>
+      <input type="file" id="fotoInput" accept="image/*" capture="environment" style="display:none" onchange="handleFoto(this)"/>
+      <div class="field"><label>Nombre *</label><input id="cliNombre" placeholder="Juan Pérez"/></div>
+      <div class="g2">
+        <div class="field"><label>Teléfono</label><input id="cliTel" type="tel" placeholder="+1 000 0000"/></div>
+        <div class="field"><label>Correo</label><input id="cliCorreo" type="email" placeholder="mail@mail.com"/></div>
+      </div>
+      <div class="field"><label>Dirección</label><input id="cliDir"/></div>
+      <div class="field"><label>Notas</label><textarea id="cliNotas" rows="2"></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-out" onclick="cerrar('sheetCliente')">Cancelar</button>
+        <button class="btn btn-green" onclick="guardarCliente()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET PRÉSTAMO -->
+<div class="overlay" id="sheetPrestamo">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title" id="shPreTitle">Nuevo Préstamo</span>
+      <button class="sh-close" onclick="cerrar('sheetPrestamo')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div class="alert alert-err" id="errPre"></div>
+      <div class="field"><label>Cliente *</label><select id="preCliente"><option value="">— Seleccionar —</option></select></div>
+      <div class="g2">
+        <div class="field"><label>Monto *</label><input id="preMonto" type="number" inputmode="decimal" placeholder="5000"/></div>
+        <div class="field"><label>Interés % *</label><input id="preTasa" type="number" inputmode="decimal" placeholder="15"/></div>
+      </div>
+      <div class="field"><label>Tipo de interés</label>
+        <select id="preTipo"><option value="mensual">Mensual</option><option value="semanal">Semanal</option><option value="anual">Anual</option></select>
+      </div>
+      <div class="g2">
+        <div class="field"><label>Fecha inicio</label><input id="preFecha" type="date"/></div>
+        <div class="field"><label>Plazo (meses)</label><input id="prePlazo" type="number" inputmode="numeric" placeholder="12"/></div>
+      </div>
+      <div class="field"><label>Vencimiento</label><input id="preVence" type="date"/></div>
+      <div class="field"><label>Mora por día vencido ($)</label><input id="preMora" type="number" inputmode="decimal" placeholder="20" value="20"/></div>
+      <div class="field"><label>Estado</label>
+        <select id="preEstado"><option value="activo">Activo</option><option value="pagado">Pagado</option><option value="vencido">Vencido</option><option value="refinanciado">Refinanciado</option></select>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="preNotas" rows="2"></textarea></div>
+      <div class="btn-row">
+        <button class="btn btn-out" onclick="cerrar('sheetPrestamo')">Cancelar</button>
+        <button class="btn btn-green" onclick="guardarPrestamo()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET PAGO -->
+<div class="overlay" id="sheetPago">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <span class="sh-title">Registrar Pago</span>
+      <button class="sh-close" onclick="cerrar('sheetPago')">✕</button>
+    </div>
+    <div class="sh-body">
+      <div id="pagoResumen" style="background:#f8f8f8;border-radius:12px;padding:14px;margin-bottom:14px"></div>
+      <div class="alert alert-err" id="errPago"></div>
+      <div class="field"><label>Monto del pago *</label><input id="pagoMonto" type="number" inputmode="decimal" placeholder="0.00"/></div>
+      <div class="g2">
+        <div class="field"><label>Tipo</label>
+          <select id="pagoTipo"><option value="mixto">Mixto</option><option value="interes">Solo interés</option><option value="capital">Solo capital</option></select>
+        </div>
+        <div class="field"><label>Fecha</label><input id="pagoFecha" type="date"/></div>
+      </div>
+      <div class="field"><label>Notas</label><input id="pagoNotas" placeholder="Pago semanal…"/></div>
+      <div class="btn-row">
+        <button class="btn btn-out" onclick="cerrar('sheetPago')">Cancelar</button>
+        <button class="btn btn-yellow" onclick="guardarPago()">💰 Confirmar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- SHEET DETALLE -->
+<div class="overlay" id="sheetDetalle">
+  <div class="sheet">
+    <div class="sh-handle"></div>
+    <div class="sh-hdr">
+      <div><div class="sh-title" id="detNombre"></div><div style="font-size:12px;color:#aaa;margin-top:2px" id="detTel"></div></div>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span id="detBadge" class="badge"></span>
+        <button class="sh-close" onclick="cerrar('sheetDetalle')">✕</button>
+      </div>
+    </div>
+    <div id="detBody"></div>
+    <div style="padding:8px 20px 16px">
+      <div class="btn-row" style="margin-bottom:10px">
+        <button class="btn btn-out" style="font-size:13px" onclick="editarPrestamo()">✏️ Editar</button>
+        <button class="btn btn-yellow" onclick="abrirPagoDesdeDetalle()">💰 Pago</button>
+      </div>
+      <button class="btn btn-blue" onclick="exportarPDF()">📄 Exportar PDF</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CONFIG ─────────────────────────────────────────────────────────────────
+const SB_URL = "https://wioqjplmozcwakjgrcoh.supabase.co";
+const SB_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Indpb3FqcGxtb3pjd2FramdyY29oIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1NzA3NTMsImV4cCI6MjA5NzE0Njc1M30.EYuTJzS4HCB3zT-yGbSgMZpZCNcmfiQuV8c86zLRj8U";
+const STORAGE = SB_URL+"/storage/v1/object/public/clientes-id/";
+const H = {"Content-Type":"application/json","apikey":SB_KEY,"Authorization":"Bearer "+SB_KEY,"Prefer":"return=representation"};
+
+const api = async (path, opts={}) => {
+  const r = await fetch(SB_URL+"/rest/v1"+path, {headers:{...H,...(opts.headers||{})}, ...opts});
+  if(!r.ok) throw new Error(await r.text());
+  const t = await r.text(); return t ? JSON.parse(t) : [];
+};
+
+// ── HELPERS ────────────────────────────────────────────────────────────────
+const fmt  = n => new Intl.NumberFormat("es-MX",{style:"currency",currency:"USD",minimumFractionDigits:2}).format(n||0);
+const fmtS = n => { const v=parseFloat(n||0); return v>=1000?"$"+(v/1000).toFixed(1)+"k":"$"+v.toFixed(0); };
+const fmtD = d => d?new Date(d+"T00:00:00").toLocaleDateString("es-MX",{day:"2-digit",month:"short",year:"2-digit"}):"—";
+const fmtMes = d => { if(!d) return "—"; return new Date(d).toLocaleDateString("es-MX",{month:"long",year:"numeric"}); };
+const dias = f => f?Math.floor((new Date()-new Date(f+"T00:00:00"))/86400000):0;
+const calcInt = (m,t,tp,f) => { const d=dias(f); const p=tp==="mensual"?d/30.44:tp==="semanal"?d/7:d/365.25; return Math.round(m*(t/100)*p*100)/100; };
+const today = () => new Date().toISOString().split("T")[0];
+const EC = {activo:"#00c853",pagado:"#64b5f6",vencido:"#ff5252",refinanciado:"#ffd600"};
+const EB = {activo:"#00c85318",pagado:"#64b5f618",vencido:"#ff525218",refinanciado:"#ffd60018"};
+const h = (tag,attr,inner) => { let s=`<${tag}`; for(const k in attr) s+=` ${k}="${attr[k]}"`; return s+`>${inner||""}</${tag}>`; };
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let tab = "prestamos", prestamos = [], clientes = [];
+let filtro = "todos", busqueda = "";
+let prestamoActivo = null, clienteActivo = null, fotoFile = null;
+let prestamoEditId = null, clienteEditId = null;
+
+// ── NAV ────────────────────────────────────────────────────────────────────
+const TABS = [{id:"prestamos",icon:"📋",lbl:"Préstamos"},{id:"resumen",icon:"📊",lbl:"Resumen"},{id:"reportes",icon:"📈",lbl:"Reportes"},{id:"tasas",icon:"💰",lbl:"Tasas"},{id:"clientes",icon:"👥",lbl:"Clientes"}];
+
+function renderNav(){
+  document.getElementById("nav").innerHTML = TABS.map(t=>
+    `<button class="nav-btn ${tab===t.id?"active":""}" onclick="setTab('${t.id}')"><span class="nav-icon">${t.icon}</span>${t.lbl}</button>`
+  ).join("");
+}
+
+function setTab(t){
+  tab = t;
+  const fab = document.getElementById("fab");
+  fab.style.display = (t==="prestamos"||t==="clientes") ? "flex" : "none";
+  renderNav();
+  renderContent();
+}
+
+function abrirFab(){
+  if(tab==="clientes") abrirSheetCliente();
+  else abrirSheetPrestamo();
+}
+
+// ── CARGAR DATOS ───────────────────────────────────────────────────────────
+async function cargarDatos(){
+  try {
+    const [p,c] = await Promise.all([
+      api("/prestamos_detalle?order=created_at.desc"),
+      api("/clientes?order=nombre.asc")
+    ]);
+    prestamos = p; clientes = c;
+    renderContent();
+  } catch(e){ console.error(e); }
+}
+
+function renderContent(){
+  const el = document.getElementById("content");
+  if(tab==="prestamos") el.innerHTML = renderPrestamos();
+  else if(tab==="resumen") el.innerHTML = renderResumen();
+  else if(tab==="reportes") el.innerHTML = renderReportes();
+  else if(tab==="tasas") el.innerHTML = renderTasas();
+  else if(tab==="clientes") el.innerHTML = renderClientes();
+}
+
+// ── PRÉSTAMOS ──────────────────────────────────────────────────────────────
+function renderPrestamos(){
+  const filtrados = prestamos.filter(p=>{
+    const mE = filtro==="todos"||p.estado===filtro;
+    const mB = (p.cliente_nombre||"").toLowerCase().includes(busqueda.toLowerCase());
+    return mE&&mB;
+  });
+  const cliMap = {}; clientes.forEach(c=>cliMap[c.id]=c);
+
+  let html = `
+    <div class="search-wrap"><span class="search-ico">🔍</span>
+      <input class="search-inp" placeholder="Buscar cliente…" value="${busqueda}" oninput="busqueda=this.value;renderContent()"/>
+    </div>
+    <div class="filter-row">
+      ${["todos","activo","vencido","pagado","refinanciado"].map(e=>
+        `<button class="ftab ${filtro===e?"active":""}" onclick="filtro='${e}';renderContent()">${e==="todos"?"Todos":e}</button>`
+      ).join("")}
+    </div>`;
+
+  if(filtrados.length===0){
+    html += `<div class="empty"><div class="empty-icon">📋</div><div class="empty-msg">${busqueda||filtro!=="todos"?"Sin resultados":"Sin préstamos.\nToca ＋ para crear."}</div></div>`;
+    return html;
+  }
+
+  filtrados.forEach(p => {
+    const int = calcInt(p.monto_principal,p.tasa_interes,p.tipo_interes,p.fecha_prestamo);
+    const mora = parseFloat(p.mora_acumulada||0);
+    const saldo = parseFloat(p.saldo_pendiente||0)+mora;
+    const pct = p.monto_principal>0?Math.min(100,(p.total_pagado/p.monto_principal)*100):0;
+    const cli = cliMap[p.cliente_id];
+    const ava = cli?.foto_id
+      ? `<div class="avatar"><img src="${cli.foto_id}"/></div>`
+      : `<div class="avatar">${(p.cliente_nombre||"?").charAt(0).toUpperCase()}</div>`;
+
+    html += `
+      <div class="loan-card" onclick="abrirDetalle('${p.id}')">
+        <div class="card-top">
+          ${ava}
+          <div style="flex:1;min-width:0">
+            <div class="card-name">${p.cliente_nombre||""}</div>
+            <div class="card-meta">${p.tasa_interes}% ${p.tipo_interes} · ${fmtD(p.fecha_prestamo)}</div>
+          </div>
+          <span class="badge" style="background:${EB[p.estado]};color:${EC[p.estado]}">${p.estado}</span>
+        </div>
+        <div class="card-nums">
+          <div><div class="num-lbl">Capital</div><div class="num-val">${fmtS(p.monto_principal)}</div></div>
+          <div><div class="num-lbl">Interés hoy</div><div class="num-val" style="color:#00c853">${fmtS(int)}</div></div>
+          <div><div class="num-lbl">Saldo</div><div class="num-val" style="color:${mora>0?"#ff5252":"#d4a000"}">${fmtS(saldo)}</div></div>
+        </div>
+        <div class="prog-wrap">
+          <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+          <div class="prog-lbl">${pct.toFixed(0)}% pagado</div>
+        </div>
+        ${mora>0?`<div class="mora-bar"><div class="mora-lbl">⚠️ Mora: ${p.dias_vencido} día${p.dias_vencido!==1?"s":""} vencido</div><div class="mora-val">+${fmtS(mora)}</div></div>`:""}
+        <div class="card-actions">
+          <button class="card-btn pago" onclick="event.stopPropagation();abrirPago('${p.id}')">💰 Pago</button>
+          <button class="card-btn det" onclick="event.stopPropagation();abrirDetalle('${p.id}')">Ver detalle →</button>
+        </div>
+      </div>`;
+  });
+  return html;
+}
+
+// ── RESUMEN ────────────────────────────────────────────────────────────────
+function renderResumen(){
+  const activos = prestamos.filter(p=>p.estado==="activo");
+  const vencidos = prestamos.filter(p=>p.estado==="vencido");
+  const totalCap  = activos.reduce((s,p)=>s+parseFloat(p.monto_principal||0),0);
+  const totalInt  = activos.reduce((s,p)=>s+calcInt(p.monto_principal,p.tasa_interes,p.tipo_interes,p.fecha_prestamo),0);
+  const totalSaldo= activos.reduce((s,p)=>s+parseFloat(p.saldo_pendiente||0),0);
+  const totalCob  = prestamos.reduce((s,p)=>s+parseFloat(p.total_pagado||0),0);
+
+  let html = `
+    <div style="padding:16px 14px 8px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#00c853;letter-spacing:.04em">Resumen General</div>
+      <div style="font-size:11px;color:#aaa">Actualizado en tiempo real</div>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-box"><div class="stat-lbl">Capital activo</div><div class="stat-val">${fmt(totalCap)}</div><div class="stat-sub">${activos.length} préstamos</div></div>
+      <div class="stat-box" style="border-color:#00c85340"><div class="stat-lbl">Interés acumulado</div><div class="stat-val" style="color:#00c853">${fmt(totalInt)}</div><div class="stat-sub">Activos hoy</div></div>
+      <div class="stat-box" style="border-color:#ffd60050"><div class="stat-lbl">Por cobrar</div><div class="stat-val" style="color:#d4a000">${fmt(totalSaldo)}</div><div class="stat-sub">Saldo pendiente</div></div>
+      <div class="stat-box" style="border-color:#64b5f650"><div class="stat-lbl">Total cobrado</div><div class="stat-val" style="color:#64b5f6">${fmt(totalCob)}</div><div class="stat-sub">Histórico</div></div>
+    </div>`;
+
+  if(vencidos.length>0){
+    html+=`<div style="margin:0 14px 14px;background:#fff5f5;border:1px solid #ffcccc;border-radius:12px;padding:12px 14px">
+      <div style="font-size:12px;color:#cc3333;font-weight:600;margin-bottom:6px">⚠️ ${vencidos.length} préstamo${vencidos.length>1?"s":""} vencido${vencidos.length>1?"s":""}</div>
+      ${vencidos.map(p=>`<div style="font-size:12px;color:#888;padding-top:4px;border-top:1px solid #ffdddd;margin-top:4px">${p.cliente_nombre} · ${fmt(p.saldo_pendiente)} pendiente</div>`).join("")}
+    </div>`;
+  }
+
+  const estados = [{e:"activo",l:"Activos",c:"#00c853"},{e:"vencido",l:"Vencidos",c:"#ff5252"},{e:"pagado",l:"Pagados",c:"#64b5f6"},{e:"refinanciado",l:"Refinanciados",c:"#ffd600"}];
+  html+=`<div style="padding:0 14px 14px">`;
+  estados.forEach(({e,l,c})=>{
+    const cnt=prestamos.filter(p=>p.estado===e).length;
+    const pct=prestamos.length>0?(cnt/prestamos.length)*100:0;
+    html+=`<div style="margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:5px"><span style="color:${c}">${l}</span><span style="color:#aaa">${cnt}</span></div>
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${c}"></div></div>
+    </div>`;
+  });
+  html+=`</div>`;
+  return html;
+}
+
+// ── REPORTES ───────────────────────────────────────────────────────────────
+function renderReportes(){
+  const activos = prestamos.filter(p=>p.estado==="activo").slice(0,8);
+  const maxVal = Math.max(...activos.map(p=>parseFloat(p.monto_principal||0)),1);
+
+  let html=`
+    <div style="padding:16px 14px 8px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#00c853;letter-spacing:.04em">Reportes</div>
+      <div style="font-size:11px;color:#aaa">Análisis de tu cartera</div>
+    </div>
+    <div style="margin:0 14px 16px;background:#fff;border:1px solid #e8e8e8;border-radius:14px;padding:14px">
+      <div style="font-size:11px;color:#aaa;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:12px">Cartera activa</div>`;
+
+  if(activos.length===0){
+    html+=`<div style="font-size:13px;color:#ccc;text-align:center;padding:16px">Sin préstamos activos</div>`;
+  } else {
+    activos.forEach(p=>{
+      const int=calcInt(p.monto_principal,p.tasa_interes,p.tipo_interes,p.fecha_prestamo);
+      const pct=(parseFloat(p.monto_principal)/maxVal)*100;
+      const nombre=(p.cliente_nombre||"").split(" ")[0];
+      html+=`<div class="chart-row">
+        <div class="chart-lbl">${nombre}</div>
+        <div class="chart-track">
+          <div class="chart-fill" style="width:${pct}%"><span style="font-size:9px">${fmtS(p.monto_principal)}</span></div>
+          <div class="chart-int" style="width:${Math.min((int/parseFloat(p.monto_principal))*200,100)}%"></div>
+        </div>
+        <div class="chart-gain">+${fmtS(int)}</div>
+      </div>`;
+    });
+  }
+  html+=`</div>`;
+
+  // Resumen mensual - cargado por JS
+  html+=`<div style="padding:0 14px 8px"><div style="font-size:11px;color:#aaa;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:10px">Cobros por mes</div></div>
+    <div id="resMensual"><div style="text-align:center;padding:24px;color:#ccc;font-size:13px">Cargando…</div></div>`;
+
+  // Cargar resumen mensual async
+  setTimeout(async()=>{
+    try{
+      const data = await api("/resumen_mensual?order=mes.desc&limit=12");
+      const el = document.getElementById("resMensual");
+      if(!el) return;
+      if(data.length===0){ el.innerHTML=`<div style="text-align:center;padding:24px;color:#ccc;font-size:13px">Sin pagos aún</div>`; return; }
+      el.innerHTML = data.map(m=>`
+        <div class="mes-card">
+          <div class="mes-title">${fmtMes(m.mes)}</div>
+          <div class="mes-row"><span style="color:#aaa">Total cobrado</span><span style="color:#d4a000;font-weight:600">${fmt(m.total_cobrado)}</span></div>
+          <div class="mes-row"><span style="color:#aaa">De interés</span><span style="color:#00c853">${fmt(m.cobrado_interes)}</span></div>
+          <div class="mes-row"><span style="color:#aaa">De capital</span><span style="color:#64b5f6">${fmt(m.cobrado_capital)}</span></div>
+          <div class="mes-row" style="border:none"><span style="color:#aaa">Préstamos</span><span>${m.prestamos_con_pago}</span></div>
+        </div>`).join("");
+    }catch(e){}
+  },100);
+
+  return html;
+}
+
+// ── TASAS ──────────────────────────────────────────────────────────────────
+const TRAMOS=[
+  {min:100,max:500,pct:20,cl:"t1",color:"#64b5f6"},
+  {min:600,max:1500,pct:25,cl:"t2",color:"#00c853"},
+  {min:1600,max:4000,pct:30,cl:"t3",color:"#ffd600"},
+  {min:4100,max:7000,pct:35,cl:"t4",color:"#ff9800"},
+  {min:7100,max:10000,pct:40,cl:"t5",color:"#ff5252"},
+];
+const MONTOS=[]; for(let i=100;i<=10000;i+=100) MONTOS.push(i);
+const getTramo=m=>TRAMOS.find(t=>m>=t.min&&m<=t.max);
+const fmtT=n=>"$"+n.toLocaleString("es-MX",{minimumFractionDigits:0,maximumFractionDigits:0});
+const fmtT2=n=>"$"+n.toLocaleString("es-MX",{minimumFractionDigits:2,maximumFractionDigits:2});
+
+let tasaBusqueda="";
+
+function renderTasas(){
+  const filtrados=tasaBusqueda?MONTOS.filter(m=>m.toString().includes(tasaBusqueda)):MONTOS;
+  const totalCap=filtrados.reduce((s,m)=>s+m,0);
+  const totalGan=filtrados.reduce((s,m)=>{const t=getTramo(m);return s+m*(t.pct/100);},0);
+
+  let html=`
+    <div style="padding:16px 14px 8px">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:22px;color:#00c853;letter-spacing:.04em">Tabla de Tasas</div>
+      <div style="font-size:11px;color:#aaa">Escala progresiva · más monto = más ganancia</div>
+    </div>
+    <div class="escala-strip">
+      ${[{r:"$100–$500",p:"20%",c:"#64b5f6"},{r:"$600–$1,500",p:"25%",c:"#00c853"},{r:"$1,600–$4k",p:"30%",c:"#ffd600"},{r:"$4,100–$7k",p:"35%",c:"#ff9800"},{r:"$7,100–$10k",p:"40%",c:"#ff5252"}].map(x=>`
+        <div class="esc-chip"><div class="esc-rango">${x.r}</div><div class="esc-pct" style="color:${x.c}">${x.p}</div></div>`).join("")}
+    </div>
+    <div class="res-grid">
+      <div class="res-box"><div class="res-lbl">Capital total</div><div class="res-val">${fmtT(totalCap)}</div></div>
+      <div class="res-box"><div class="res-lbl">Ganancia x sem.</div><div class="res-val" style="color:#00c853">${fmtT2(totalGan)}</div></div>
+      <div class="res-box"><div class="res-lbl">Total a cobrar</div><div class="res-val" style="color:#d4a000">${fmtT(totalCap+totalGan)}</div></div>
+      <div class="res-box"><div class="res-lbl">Ganancia x mes</div><div class="res-val" style="color:#1565c0">${fmtT2(totalGan*4)}</div></div>
+    </div>
+    <div class="search-wrap"><span class="search-ico">🔍</span>
+      <input class="search-inp" type="number" inputmode="numeric" placeholder="Buscar monto…" value="${tasaBusqueda}" oninput="tasaBusqueda=this.value;renderContent()"/>
+    </div>
+    <div class="int-hdr">
+      <div class="int-th" style="text-align:left;color:#fff">Préstamo</div>
+      <div class="int-th" style="color:#aaa">Tasa</div>
+      <div class="int-th" style="color:#00c85390">Ganancia</div>
+      <div class="int-th" style="color:#ffd60090">Total cobrar</div>
+    </div>`;
+
+  let tramoCurrent=null;
+  filtrados.forEach(monto=>{
+    const t=getTramo(monto);
+    const gan=monto*(t.pct/100);
+    const total=monto+gan;
+    if(tramoCurrent!==t.cl){
+      tramoCurrent=t.cl;
+      html+=`<div class="int-sep"><span>${fmtT(t.min)} — ${fmtT(t.max)}</span><span style="color:${t.color}">${t.pct}% ganancia</span></div>`;
+    }
+    html+=`<div class="int-row ${t.cl}">
+      <div class="int-monto">${fmtT(monto)}</div>
+      <div style="text-align:right"><span class="int-badge" style="background:${t.color}22;color:${t.color}">${t.pct}%</span></div>
+      <div><div class="int-val" style="color:${t.color}">${fmtT2(gan)}</div><div class="int-sub">x mes: ${fmtT2(gan*4)}</div></div>
+      <div><div class="int-val" style="color:#1a1a1a">${fmtT2(total)}</div><div class="int-sub">capital+interés</div></div>
+    </div>`;
+  });
+
+  if(filtrados.length===0) html+=`<div class="empty"><div class="empty-icon">🔍</div><div class="empty-msg">Sin resultados</div></div>`;
+  return html;
+}
+
+// ── CLIENTES ───────────────────────────────────────────────────────────────
+let cliBusqueda="";
+function renderClientes(){
+  const filtrados=clientes.filter(c=>c.nombre.toLowerCase().includes(cliBusqueda.toLowerCase())||(c.telefono||"").includes(cliBusqueda));
+  let html=`
+    <div class="search-wrap"><span class="search-ico">🔍</span>
+      <input class="search-inp" placeholder="Buscar cliente…" value="${cliBusqueda}" oninput="cliBusqueda=this.value;renderContent()"/>
+    </div>
+    <div class="sec-hdr"><div class="sec-title">Clientes</div><div class="sec-sub">${filtrados.length}</div></div>`;
+  if(filtrados.length===0){
+    html+=`<div class="empty"><div class="empty-icon">👤</div><div class="empty-msg">Sin clientes. Toca ＋ para agregar.</div></div>`;
+    return html;
+  }
+  filtrados.forEach(c=>{
+    const ava=c.foto_id?`<div class="avatar"><img src="${c.foto_id}"/></div>`:`<div class="avatar">${c.nombre.charAt(0).toUpperCase()}</div>`;
+    html+=`<div class="cli-card">
+      ${ava}
+      <div style="flex:1;min-width:0">
+        <div class="cli-name">${c.nombre}</div>
+        <div class="cli-contact">${[c.telefono,c.correo].filter(Boolean).join(" · ")||"Sin contacto"}</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0">
+        <button class="icon-btn" onclick="abrirSheetCliente('${c.id}')">✏️</button>
+        <button class="icon-btn red" onclick="eliminarCliente('${c.id}')">🗑</button>
+      </div>
+    </div>`;
+  });
+  return html;
+}
+
+// ── SHEETS ────────────────────────────────────────────────────────────────
+function abrir(id){ document.getElementById(id).classList.add("open"); }
+function cerrar(id){ document.getElementById(id).classList.remove("open"); }
+
+function abrirSheetCliente(id=null){
+  clienteEditId=id;
+  const c=id?clientes.find(x=>x.id===id):null;
+  document.getElementById("shCliTitle").textContent=c?"Editar Cliente":"Nuevo Cliente";
+  document.getElementById("cliNombre").value=c?.nombre||"";
+  document.getElementById("cliTel").value=c?.telefono||"";
+  document.getElementById("cliCorreo").value=c?.correo||"";
+  document.getElementById("cliDir").value=c?.direccion||"";
+  document.getElementById("cliNotas").value=c?.notas||"";
+  document.getElementById("fotoPreviewWrap").style.display="none";
+  document.getElementById("fotoPlaceholder").style.display="block";
+  if(c?.foto_id){ document.getElementById("fotoPreview").src=c.foto_id; document.getElementById("fotoPreviewWrap").style.display="block"; document.getElementById("fotoPlaceholder").style.display="none"; }
+  setErr("errCli",""); fotoFile=null;
+  abrir("sheetCliente");
+}
+
+function abrirSheetPrestamo(id=null){
+  prestamoEditId=id;
+  const p=id?prestamos.find(x=>x.id===id):null;
+  document.getElementById("shPreTitle").textContent=p?"Editar Préstamo":"Nuevo Préstamo";
+  const sel=document.getElementById("preCliente");
+  sel.innerHTML=`<option value="">— Seleccionar —</option>`+clientes.map(c=>`<option value="${c.id}" ${p?.cliente_id===c.id?"selected":""}>${c.nombre}</option>`).join("");
+  document.getElementById("preMonto").value=p?.monto_principal||"";
+  document.getElementById("preTasa").value=p?.tasa_interes||"";
+  document.getElementById("preTipo").value=p?.tipo_interes||"mensual";
+  document.getElementById("preFecha").value=p?.fecha_prestamo||today();
+  document.getElementById("prePlazo").value=p?.plazo_meses||"";
+  document.getElementById("preVence").value=p?.fecha_vencimiento||"";
+  document.getElementById("preMora").value=p?.mora_diaria??20;
+  document.getElementById("preEstado").value=p?.estado||"activo";
+  document.getElementById("preNotas").value=p?.notas||"";
+  setErr("errPre","");
+  abrir("sheetPrestamo");
+}
+
+function abrirPago(preId){
+  prestamoActivo=prestamos.find(p=>p.id===preId);
+  if(!prestamoActivo) return;
+  const p=prestamoActivo;
+  const int=calcInt(p.monto_principal,p.tasa_interes,p.tipo_interes,p.fecha_prestamo);
+  const mora=parseFloat(p.mora_acumulada||0);
+  const pct=p.monto_principal>0?Math.min(100,(p.total_pagado/p.monto_principal)*100):0;
+  document.getElementById("pagoResumen").innerHTML=`
+    <div style="font-size:14px;font-weight:600;margin-bottom:8px">${p.cliente_nombre}</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+      <div><div class="d-lbl">Capital</div><div class="d-val">${fmtS(p.monto_principal)}</div></div>
+      <div><div class="d-lbl">Interés hoy</div><div class="d-val" style="color:#00c853">${fmtS(int)}</div></div>
+      <div><div class="d-lbl">Pagado</div><div class="d-val" style="color:#64b5f6">${fmtS(p.total_pagado)}</div></div>
+      <div><div class="d-lbl">Saldo${mora>0?"+Mora":""}</div><div class="d-val" style="color:${mora>0?"#ff5252":"#d4a000"}">${fmtS(parseFloat(p.saldo_pendiente)+mora)}</div></div>
+    </div>
+    ${mora>0?`<div style="background:#fff5f5;border:1px solid #ffcccc;border-radius:8px;padding:8px 12px;font-size:12px;color:#cc3333;margin-bottom:8px">⚠️ Mora: ${fmt(mora)} · ${p.dias_vencido} días × $${parseFloat(p.mora_diaria||0).toFixed(0)}/día</div>`:""}
+    <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+    <div class="prog-lbl">${pct.toFixed(0)}% pagado</div>`;
+  document.getElementById("pagoMonto").value="";
+  document.getElementById("pagoFecha").value=today();
+  document.getElementById("pagoNotas").value="";
+  setErr("errPago","");
+  abrir("sheetPago");
+}
+
+function abrirPagoDesdeDetalle(){ cerrar("sheetDetalle"); setTimeout(()=>abrirPago(prestamoActivo?.id),200); }
+
+async function abrirDetalle(id){
+  prestamoActivo=prestamos.find(p=>p.id===id);
+  if(!prestamoActivo) return;
+  const p=prestamoActivo;
+  const int=calcInt(p.monto_principal,p.tasa_interes,p.tipo_interes,p.fecha_prestamo);
+  const mora=parseFloat(p.mora_acumulada||0);
+  const saldoTotal=parseFloat(p.saldo_pendiente||0)+mora;
+  const pct=p.monto_principal>0?Math.min(100,(p.total_pagado/p.monto_principal)*100):0;
+
+  document.getElementById("detNombre").textContent=p.cliente_nombre||"";
+  document.getElementById("detTel").textContent=p.cliente_telefono||"";
+  document.getElementById("detBadge").textContent=p.estado;
+  document.getElementById("detBadge").style.background=EB[p.estado];
+  document.getElementById("detBadge").style.color=EC[p.estado];
+
+  let body=`
+    <div class="d-hero">
+      <div class="d-nums">
+        <div><div class="d-lbl">Capital</div><div class="d-val">${fmt(p.monto_principal)}</div></div>
+        <div><div class="d-lbl">Interés hoy</div><div class="d-val" style="color:#00c853">${fmt(int)}</div></div>
+        <div><div class="d-lbl">Total a pagar</div><div class="d-val" style="color:${mora>0?"#ff5252":"#d4a000"}">${fmt(saldoTotal)}</div></div>
+      </div>
+      ${mora>0?`<div style="background:#fff5f5;border:1px solid #ffcccc;border-radius:8px;padding:10px 12px;margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div><div style="font-size:11px;color:#cc3333;font-weight:700">⚠️ MORA ACUMULADA</div><div style="font-size:11px;color:#e06060;margin-top:2px">${p.dias_vencido} días × $${parseFloat(p.mora_diaria||0).toFixed(0)}/día</div></div>
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:20px;color:#cc3333">${fmt(mora)}</div>
+        </div>
+      </div>`:""}
+      <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+      <div class="prog-lbl">${fmt(p.total_pagado)} pagado · ${pct.toFixed(0)}%</div>
+    </div>
+    <div class="d-row"><span class="d-row-lbl">Tasa</span><span>${p.tasa_interes}% ${p.tipo_interes}</span></div>
+    <div class="d-row"><span class="d-row-lbl">Fecha préstamo</span><span>${fmtD(p.fecha_prestamo)}</span></div>
+    <div class="d-row"><span class="d-row-lbl">Vencimiento</span><span>${fmtD(p.fecha_vencimiento)||"Sin definir"}</span></div>
+    <div class="d-row"><span class="d-row-lbl">Plazo</span><span>${p.plazo_meses?p.plazo_meses+" meses":"—"}</span></div>
+    <div class="d-row"><span class="d-row-lbl">Mora diaria</span><span style="color:${parseFloat(p.mora_diaria||0)>0?"#cc3333":"#bbb"}">${parseFloat(p.mora_diaria||0)>0?"$"+parseFloat(p.mora_diaria).toFixed(0)+"/día":"Sin mora"}</span></div>
+    <div class="d-row" style="border:none"><span class="d-row-lbl">Días activo</span><span>${dias(p.fecha_prestamo)} días</span></div>
+    <div style="padding:14px 20px 6px">
+      <div style="font-size:11px;color:#aaa;font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:8px">Pagos</div>
+      <div id="listaPagos"><div style="font-size:13px;color:#ccc;padding:12px 0">Cargando…</div></div>
+    </div>`;
+
+  document.getElementById("detBody").innerHTML=body;
+  abrir("sheetDetalle");
+
+  try{
+    const pagos=await api(`/pagos?prestamo_id=eq.${id}&order=fecha_pago.desc`);
+    const el=document.getElementById("listaPagos");
+    if(!el) return;
+    if(pagos.length===0){ el.innerHTML=`<div style="font-size:13px;color:#ccc;padding:12px 0">Sin pagos registrados</div>`; return; }
+    el.innerHTML=pagos.map(pg=>`
+      <div class="pago-item">
+        <div><div class="pago-monto">${fmt(pg.monto)}</div><div class="pago-meta">${pg.notas||pg.tipo_pago}</div></div>
+        <div style="font-size:12px;color:#aaa;text-align:right">${fmtD(pg.fecha_pago)}</div>
+      </div>`).join("");
+  }catch(e){}
+}
+
+function editarPrestamo(){ cerrar("sheetDetalle"); setTimeout(()=>abrirSheetPrestamo(prestamoActivo?.id),200); }
+
+// ── GUARDAR ────────────────────────────────────────────────────────────────
+function setErr(id,msg){
+  const el=document.getElementById(id);
+  el.textContent=msg; el.classList.toggle("show",!!msg);
+}
+
+async function handleFoto(input){
+  const file=input.files[0]; if(!file) return;
+  fotoFile=file;
+  const reader=new FileReader();
+  reader.onload=e=>{ document.getElementById("fotoPreview").src=e.target.result; document.getElementById("fotoPreviewWrap").style.display="block"; document.getElementById("fotoPlaceholder").style.display="none"; };
+  reader.readAsDataURL(file);
+}
+
+async function uploadFoto(file,cliId){
+  const ext=file.name.split(".").pop();
+  const path=`${cliId}.${ext}`;
+  const r=await fetch(`${SB_URL}/storage/v1/object/clientes-id/${path}`,{method:"POST",headers:{apikey:SB_KEY,Authorization:"Bearer "+SB_KEY,"Content-Type":file.type,"x-upsert":"true"},body:file});
+  if(!r.ok) throw new Error("Error subiendo foto");
+  return STORAGE+path;
+}
+
+async function guardarCliente(){
+  const nombre=document.getElementById("cliNombre").value.trim();
+  if(!nombre) return setErr("errCli","El nombre es requerido.");
+  const payload={nombre,telefono:document.getElementById("cliTel").value,correo:document.getElementById("cliCorreo").value,direccion:document.getElementById("cliDir").value,notas:document.getElementById("cliNotas").value};
+  try{
+    let id=clienteEditId;
+    if(id){ await api(`/clientes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify(payload)}); }
+    else { const [nuevo]=await api("/clientes",{method:"POST",body:JSON.stringify({...payload,foto_id:""})}); id=nuevo.id; }
+    if(fotoFile){ const url=await uploadFoto(fotoFile,id); await api(`/clientes?id=eq.${id}`,{method:"PATCH",body:JSON.stringify({foto_id:url})}); }
+    cerrar("sheetCliente"); await cargarDatos();
+  }catch(e){ setErr("errCli","Error al guardar: "+e.message); }
+}
+
+async function guardarPrestamo(){
+  const cliId=document.getElementById("preCliente").value;
+  const monto=document.getElementById("preMonto").value;
+  const tasa=document.getElementById("preTasa").value;
+  if(!cliId) return setErr("errPre","Selecciona un cliente.");
+  if(!monto||isNaN(monto)) return setErr("errPre","Monto inválido.");
+  if(!tasa||isNaN(tasa)) return setErr("errPre","Tasa inválida.");
+  const payload={cliente_id:cliId,monto_principal:parseFloat(monto),tasa_interes:parseFloat(tasa),tipo_interes:document.getElementById("preTipo").value,fecha_prestamo:document.getElementById("preFecha").value,fecha_vencimiento:document.getElementById("preVence").value||null,plazo_meses:document.getElementById("prePlazo").value?parseInt(document.getElementById("prePlazo").value):null,mora_diaria:parseFloat(document.getElementById("preMora").value)||0,estado:document.getElementById("preEstado").value,notas:document.getElementById("preNotas").value};
+  try{
+    if(prestamoEditId) await api(`/prestamos?id=eq.${prestamoEditId}`,{method:"PATCH",body:JSON.stringify(payload)});
+    else await api("/prestamos",{method:"POST",body:JSON.stringify(payload)});
+    cerrar("sheetPrestamo"); await cargarDatos();
+  }catch(e){ setErr("errPre","Error al guardar: "+e.message); }
+}
+
+async function guardarPago(){
+  const monto=document.getElementById("pagoMonto").value;
+  if(!monto||isNaN(monto)) return setErr("errPago","Monto inválido.");
+  const p=prestamoActivo;
+  const payload={prestamo_id:p.id,monto:parseFloat(monto),tipo_pago:document.getElementById("pagoTipo").value,fecha_pago:document.getElementById("pagoFecha").value,notas:document.getElementById("pagoNotas").value};
+  try{
+    await api("/pagos",{method:"POST",body:JSON.stringify(payload)});
+    // Actualizar estado automáticamente
+    const nuevoTotal=parseFloat(p.total_pagado||0)+parseFloat(monto);
+    const saldoRest=parseFloat(p.monto_principal||0)-nuevoTotal;
+    const hoy=new Date(); hoy.setHours(0,0,0,0);
+    const vence=p.fecha_vencimiento?new Date(p.fecha_vencimiento+"T00:00:00"):null;
+    let nuevoEstado=saldoRest<=0?"pagado":(vence&&hoy>vence?"vencido":"activo");
+    if(nuevoEstado!==p.estado) await api(`/prestamos?id=eq.${p.id}`,{method:"PATCH",body:JSON.stringify({estado:nuevoEstado,updated_at:new Date().toISOString()})});
+    cerrar("sheetPago"); await cargarDatos();
+  }catch(e){ setErr("errPago","Error al guardar."); }
+}
+
+async function eliminarCliente(id){
+  if(!confirm("¿Eliminar cliente y todos sus préstamos?")) return;
+  await api(`/clientes?id=eq.${id}`,{method:"DELETE"});
+  await cargarDatos();
+}
+
+// ── PDF ────────────────────────────────────────────────────────────────────
+async function exportarPDF(){
+  const p=prestamoActivo; if(!p) return;
+  const {jsPDF}=window.jspdf;
+  const doc=new jsPDF({unit:"mm",format:"a4"});
+  const W=210,ML=18,MR=192; let y=0;
+  const G=[0,168,68],GO=[40,40,40],GM=[110,110,110],GL=[180,180,180],GBG=[248,248,248],LN=[230,230,230],BL=[255,255,255];
+  const sC=rgb=>doc.setTextColor(...rgb);
+  const sF=rgb=>doc.setFillColor(...rgb);
+  const sD=rgb=>doc.setDrawColor(...rgb);
+  const bold=sz=>{doc.setFont("helvetica","bold");doc.setFontSize(sz);};
+  const norm=sz=>{doc.setFont("helvetica","normal");doc.setFontSize(sz);};
+
+  sF(G);doc.rect(0,0,W,1.5,"F");
+  bold(20);sC(GO);doc.text("PRÉSTAMOS",ML,16);
+  bold(20);sC(G);doc.text("PRO",ML+47,16);
+  norm(8);sC(GL);doc.text("REPORTE DE CLIENTE",ML,22);
+  doc.text(new Date().toLocaleDateString("es-MX",{day:"2-digit",month:"long",year:"numeric"}),MR,22,{align:"right"});
+  sD(LN);doc.line(ML,25,MR,25);
+  y=32;
+
+  const cli=clientes.find(c=>c.id===p.cliente_id)||{nombre:p.cliente_nombre};
+  if(cli.foto_id){
+    try{
+      const img=new Image();img.crossOrigin="anonymous";
+      await new Promise((res,rej)=>{img.onload=res;img.onerror=rej;img.src=cli.foto_id;});
+      const iW=55,iH=42;
+      const cv=document.createElement("canvas");cv.width=img.width;cv.height=img.height;
+      cv.getContext("2d").drawImage(img,0,0);
+      sD([210,210,210]);doc.rect(MR-iW-.5,y-.5,iW+1,iH+1,"D");
+      doc.addImage(cv.toDataURL("image/jpeg"),MR-iW,y,iW,iH);
+    }catch(e){}
+  }
+
+  bold(16);sC(GO);doc.text(cli.nombre||"—",ML,y+8);y+=13;
+  norm(9);sC(GM);
+  if(cli.telefono){doc.text("Tel: "+cli.telefono,ML,y);y+=6;}
+  if(cli.correo){doc.text(cli.correo,ML,y);y+=6;}
+  y+=4;
+
+  const int=calcInt(p.monto_principal,p.tasa_interes,p.tipo_interes,p.fecha_prestamo);
+  const mora=parseFloat(p.mora_acumulada||0);
+  const chips=[{l:"CAPITAL",v:fmt(p.monto_principal),c:GO},{l:"INTERÉS HOY",v:fmt(int),c:G},{l:"MORA",v:fmt(mora),c:mora>0?[200,50,50]:GM},{l:"SALDO",v:fmt(parseFloat(p.saldo_pendiente)+mora),c:[180,120,0]}];
+  const cW=(MR-ML-6)/4;
+  chips.forEach((ch,i)=>{
+    const cx=ML+i*(cW+2);
+    sF(GBG);sD(LN);doc.roundedRect(cx,y,cW,16,2,2,"FD");
+    bold(6);sC(GL);doc.text(ch.l,cx+cW/2,y+5.5,{align:"center"});
+    bold(9);sC(ch.c);doc.text(ch.v,cx+cW/2,y+12,{align:"center"});
+  });y+=22;
+
+  sF(G);doc.rect(ML,y,2.5,10,"F");
+  bold(14);sC(GO);doc.text(fmt(p.monto_principal),ML+6,y+8);
+  norm(8);sC(GM);doc.text(`${p.tasa_interes}% ${p.tipo_interes}  ·  Inicio: ${fmtD(p.fecha_prestamo)}  ·  Estado: ${p.estado.toUpperCase()}${p.mora_diaria>0?"  ·  Mora: $"+p.mora_diaria+"/día":""}`,ML+6,y+14);
+  y+=22;
+
+  const pct=p.monto_principal>0?Math.min(100,(p.total_pagado/p.monto_principal)*100):0;
+  sF([235,235,235]);doc.roundedRect(ML,y,MR-ML,2.5,1,1,"F");
+  if(pct>0){sF(G);doc.roundedRect(ML,y,(MR-ML)*(pct/100),2.5,1,1,"F");}
+  norm(7);sC(GL);doc.text(`${pct.toFixed(0)}% pagado`,MR,y+2,{align:"right"});
+  y+=8;
+
+  try{
+    const pagos=await api(`/pagos?prestamo_id=eq.${p.id}&order=fecha_pago.desc`);
+    if(pagos.length>0){
+      sF(GBG);doc.rect(ML,y,MR-ML,6.5,"F");sD(LN);doc.rect(ML,y,MR-ML,6.5,"D");
+      bold(7);sC(GM);doc.text("FECHA",ML+3,y+4.5);doc.text("MONTO",ML+40,y+4.5);doc.text("TIPO",ML+80,y+4.5);doc.text("NOTAS",ML+110,y+4.5);y+=6.5;
+      pagos.forEach((pg,ri)=>{
+        if(y>272){doc.addPage();sF(G);doc.rect(0,0,W,1.2,"F");y=14;}
+        if(ri%2===0){sF([252,252,252]);doc.rect(ML,y,MR-ML,6.5,"F");}
+        sD(LN);doc.line(ML,y+6.5,MR,y+6.5);
+        norm(8);sC(GO);doc.text(fmtD(pg.fecha_pago),ML+3,y+4.5);
+        bold(8);sC([0,140,60]);doc.text(fmt(pg.monto),ML+40,y+4.5);
+        norm(8);sC(GM);doc.text(pg.tipo_pago,ML+80,y+4.5);doc.text((pg.notas||"").substring(0,30),ML+110,y+4.5);
+        y+=6.5;
+      });
+    }
+  }catch(e){}
+
+  const tot=doc.internal.getNumberOfPages();
+  for(let i=1;i<=tot;i++){
+    doc.setPage(i);sF(GBG);doc.rect(0,284,W,13,"F");sD(LN);doc.line(0,284,W,284);
+    norm(7);sC(GL);doc.text("PRÉSTAMOS PRO — Confidencial",ML,291);
+    doc.text("Generado el "+new Date().toLocaleString("es-MX"),W/2,291,{align:"center"});
+    doc.text(`Pág. ${i}/${tot}`,MR,291,{align:"right"});
+  }
+  doc.save(`reporte_${(cli.nombre||"cliente").replace(/\s+/g,"_")}_${today()}.pdf`);
+}
+
+// ── AUTO-VENCIMIENTO ───────────────────────────────────────────────────────
+document.getElementById("prePlazo").addEventListener("input",()=>{
+  const plazo=parseInt(document.getElementById("prePlazo").value);
+  const fecha=document.getElementById("preFecha").value;
+  if(plazo&&fecha){
+    const d=new Date(fecha+"T00:00:00");
+    d.setMonth(d.getMonth()+plazo);
+    document.getElementById("preVence").value=d.toISOString().split("T")[0];
+  }
+});
+
+// Cerrar sheet al tocar overlay
+document.querySelectorAll(".overlay").forEach(o=>{
+  o.addEventListener("click",e=>{ if(e.target===o) o.classList.remove("open"); });
+});
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+renderNav();
+setTab("prestamos");
+cargarDatos();
+</script>
+</body>
+</html>
